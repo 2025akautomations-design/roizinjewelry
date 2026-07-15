@@ -1130,7 +1130,7 @@
           (items.some(function (x) { return x.settlementId; }) ? '<div class="muted small">This transaction is part of a closed lot — edits recompute that lot.</div>' : "") +
           '<div class="row-gap save-row">' +
             (p.deleted ? "" : '<a id="editBtn" class="btn btn-ghost btn-xl" data-go="edit/' + esc(p.txnId || p.id) + '">✎ Edit</a>') +
-            (p.deleted ? "" : '<button id="editPrintBtn" class="btn btn-ghost btn-xl">＄ Adjust &amp; Print</button>') +
+            (p.deleted ? "" : '<button id="editPrintBtn" class="btn btn-ghost btn-xl">＄ Edit Total &amp; Print</button>') +
             '<button id="printBtn" class="btn btn-primary btn-xl">🖨  Print Receipt</button>' +
           "</div>" +
           '<div class="card receipt-simple" id="receipt">' + receiptHtml(items, b) + "</div>";
@@ -1227,11 +1227,11 @@
       }).join("");
     }
     modal(
-      "<h2>Receipt — adjust amounts</h2>" +
-      '<div class="muted small">Edit any AMOUNT and/or the TOTAL. Nothing recalculates automatically — only the number you change changes. The TOTAL you enter is what the books use.</div>' +
+      "<h2>Receipt — edit invoice total &amp; amounts</h2>" +
+      '<div class="muted small">You can edit each item AMOUNT and/or the INVOICE TOTAL below. Nothing recalculates automatically — only the number you change changes. Whatever you type as the INVOICE TOTAL is what the books use.</div>' +
       '<div class="card receipt-simple er-receipt"><table class="rs-table"><thead><tr>' +
         "<th>KT</th><th>UNIT</th><th>WEIGHT</th><th>PRICE</th><th>AMOUNT</th></tr></thead><tbody>" + rowsHtml() + "</tbody></table>" +
-        '<div class="rs-total">TOTAL: <input id="erTotal" class="er-total-input" inputmode="decimal" type="text" value="' + (Math.round(initTotal * 100) / 100) + '"></div></div>' +
+        '<div class="rs-total"><label for="erTotal">INVOICE TOTAL:</label> <input id="erTotal" class="er-total-input" inputmode="decimal" type="text" value="' + (Math.round(initTotal * 100) / 100) + '"></div></div>' +
       '<div class="modal-actions"><button class="btn btn-ghost" id="erSkip">Done (no print)</button>' +
       '<button class="btn btn-primary" id="erPrint">Save &amp; Print</button></div>',
       function (wrap, close) {
@@ -1990,7 +1990,7 @@
       "</div>" +
       field("Refinery sale amount ($)", '<input id="esSale" class="big-input huge" inputmode="decimal" type="text" value="' + esc(st.saleAmount != null ? st.saleAmount : "") + '">') +
       field("Reference / notes", '<input id="esRef" class="big-input" type="text" value="' + esc(st.reference || "") + '">') +
-      '<div class="muted small">Accumulated expenses ' + P.money(st.accumulatedExpenses || 0) + " — profit / loss updates from the sale amount.</div>" +
+      '<div class="muted small">Accumulated expenses ' + P.money(st.accumulatedExpenses || 0) + " ��� profit / loss updates from the sale amount.</div>" +
       '<div class="modal-actions"><button class="btn btn-ghost" id="esCancel">Cancel</button>' +
       '<button class="btn btn-primary" id="esSave">Save Changes</button></div>',
       function (wrap, close) {
