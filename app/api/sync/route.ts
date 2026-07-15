@@ -49,23 +49,29 @@ export async function GET(req: Request) {
   const action = searchParams.get("action")
 
   if (action === "pull") {
+    // `since` is now a server-authoritative monotonic cursor (seq), NOT a
+    // wall-clock timestamp. Using the client clock as the cursor let clock
+    // skew on any device permanently poison its watermark and silently skip
+    // records. `seq` is assigned server-side and strictly increasing.
     const since = Number(searchParams.get("since")) || 0
     const sql = getSql()
     const rows = (await sql`
-      SELECT store, rec_id, deleted, record
+      SELECT store, rec_id, deleted, record, seq
       FROM sync_records
-      WHERE updated_at > ${since}
-      ORDER BY updated_at ASC
+      WHERE seq > ${since}
+      ORDER BY seq ASC
       LIMIT 5000
-    `) as Array<{ store: string; rec_id: string; deleted: boolean; record: any }>
+    `) as Array<{ store: string; rec_id: string; deleted: boolean; record: any; seq: string | number }>
 
     const records = rows.map((r) => ({
       store: r.store,
       id: r.rec_id,
       deleted: r.deleted,
       record: r.record,
+      seq: Number(r.seq),
     }))
-    return json({ ok: true, records, now: Date.now() })
+    const cursor = records.reduce((m, r) => Math.max(m, r.seq), since)
+    return json({ ok: true, records, cursor, now: Date.now() })
   }
 
   return json({ ok: false, error: "unknown action" }, 400)
@@ -99,6 +105,10 @@ export async function POST(req: Request) {
 
   // Last-write-wins by updatedAt: only overwrite when the incoming write is
   // at least as new as what we already have for this key.
+  // A fresh `seq` is stamped on every applied write (INSERT via the column
+  // default, UPDATE explicitly) so pull cursors advance in server order and
+  // never depend on client clocks. The LWW guard means a stale (older) write
+  // leaves the row — and its seq — untouched.
   const sql = getSql()
   await sql`
     INSERT INTO sync_records (store, rec_id, updated_at, deleted, record)
@@ -106,7 +116,8 @@ export async function POST(req: Request) {
     ON CONFLICT (store, rec_id) DO UPDATE
     SET updated_at = EXCLUDED.updated_at,
         deleted = EXCLUDED.deleted,
-        record = EXCLUDED.record
+        record = EXCLUDED.record,
+        seq = nextval('sync_records_seq')
     WHERE EXCLUDED.updated_at >= sync_records.updated_at
   `
 

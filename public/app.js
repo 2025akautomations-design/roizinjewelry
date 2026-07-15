@@ -188,28 +188,36 @@
     if (pending && pending[k]) return Promise.resolve();
     return DB.put(store, remote);
   }
-  var _watermark = 0;
+  // The pull cursor is a SERVER-authoritative monotonic sequence (seq), never
+  // a wall-clock time. Older builds used max(record.updatedAt) as the cursor,
+  // so a device whose clock ever ran fast would inflate its watermark and then
+  // silently skip every later record from correctly-clocked devices — the
+  // devices would diverge forever. Tracking the server's seq removes clock
+  // skew from the equation entirely. The meta key is intentionally new
+  // ("syncCursor") so existing devices reset to 0 once and do a single full
+  // re-pull, converging everyone back onto the shared source of truth.
+  var _cursor = 0;
   function pullAndMerge() {
     if (!Sync.endpoint()) return Promise.resolve(false);
-    return Promise.all([Sync.pull(_watermark), pendingKeys()]).then(function (r) {
+    return Promise.all([Sync.pull(_cursor), pendingKeys()]).then(function (r) {
       var res = r[0], pending = r[1];
       if (!res || !res.records) return false;
       var changed = res.records.length > 0;
-      var maxUpdated = res.records.reduce(function (m, it) {
-        return Math.max(m, Number(it.record && it.record.updatedAt) || 0);
+      // Prefer the server-provided cursor; fall back to the max seq we saw.
+      var maxSeq = res.records.reduce(function (m, it) {
+        return Math.max(m, Number(it.seq) || 0);
       }, 0);
+      var nextCursor = Math.max(_cursor, Number(res.cursor) || 0, maxSeq);
       return res.records.reduce(function (ch, item) {
         return ch.then(function () { return mergeRecord(item.store, item.record, pending); });
       }, Promise.resolve()).then(function () {
-        // Advance only to the newest server-stamped record we received (strict
-        // ">" on the server means no re-pull loop and nothing skipped).
-        _watermark = Math.max(_watermark, maxUpdated);
-        return DB.put("meta", { k: "syncWatermark", v: _watermark }).then(function () { return changed; });
+        _cursor = nextCursor;
+        return DB.put("meta", { k: "syncCursor", v: _cursor }).then(function () { return changed; });
       });
     }).catch(function () { return false; });
   }
   function initialLoad() {
-    return DB.get("meta", "syncWatermark").then(function (m) { _watermark = (m && m.v) || 0; })
+    return DB.get("meta", "syncCursor").then(function (m) { _cursor = (m && m.v) || 0; })
       .then(pullAndMerge);
   }
   function softRefresh() {
