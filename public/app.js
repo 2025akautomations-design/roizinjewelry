@@ -188,28 +188,36 @@
     if (pending && pending[k]) return Promise.resolve();
     return DB.put(store, remote);
   }
-  var _watermark = 0;
+  // The pull cursor is a SERVER-authoritative monotonic sequence (seq), never
+  // a wall-clock time. Older builds used max(record.updatedAt) as the cursor,
+  // so a device whose clock ever ran fast would inflate its watermark and then
+  // silently skip every later record from correctly-clocked devices — the
+  // devices would diverge forever. Tracking the server's seq removes clock
+  // skew from the equation entirely. The meta key is intentionally new
+  // ("syncCursor") so existing devices reset to 0 once and do a single full
+  // re-pull, converging everyone back onto the shared source of truth.
+  var _cursor = 0;
   function pullAndMerge() {
     if (!Sync.endpoint()) return Promise.resolve(false);
-    return Promise.all([Sync.pull(_watermark), pendingKeys()]).then(function (r) {
+    return Promise.all([Sync.pull(_cursor), pendingKeys()]).then(function (r) {
       var res = r[0], pending = r[1];
       if (!res || !res.records) return false;
       var changed = res.records.length > 0;
-      var maxUpdated = res.records.reduce(function (m, it) {
-        return Math.max(m, Number(it.record && it.record.updatedAt) || 0);
+      // Prefer the server-provided cursor; fall back to the max seq we saw.
+      var maxSeq = res.records.reduce(function (m, it) {
+        return Math.max(m, Number(it.seq) || 0);
       }, 0);
+      var nextCursor = Math.max(_cursor, Number(res.cursor) || 0, maxSeq);
       return res.records.reduce(function (ch, item) {
         return ch.then(function () { return mergeRecord(item.store, item.record, pending); });
       }, Promise.resolve()).then(function () {
-        // Advance only to the newest server-stamped record we received (strict
-        // ">" on the server means no re-pull loop and nothing skipped).
-        _watermark = Math.max(_watermark, maxUpdated);
-        return DB.put("meta", { k: "syncWatermark", v: _watermark }).then(function () { return changed; });
+        _cursor = nextCursor;
+        return DB.put("meta", { k: "syncCursor", v: _cursor }).then(function () { return changed; });
       });
     }).catch(function () { return false; });
   }
   function initialLoad() {
-    return DB.get("meta", "syncWatermark").then(function (m) { _watermark = (m && m.v) || 0; })
+    return DB.get("meta", "syncCursor").then(function (m) { _cursor = (m && m.v) || 0; })
       .then(pullAndMerge);
   }
   function softRefresh() {
@@ -269,13 +277,24 @@
         order.push(key);
       }
       var t = byKey[key];
-      t.items.push(p);
+      // The grand TOTAL always includes every record. A manual receipt-total
+      // override is stored as a hidden `adjustment` line (see
+      // editableReceiptFlow) so it flows through every line-level rollup
+      // (expenses, current lot, day summary, settlements, balance) untouched.
+      // Adjustment lines are never shown as their own item and carry no weight.
       t.total += (p.price || 0);
+      if (isAdjustment(p)) { t.hasAdjustment = true; return; }
+      t.items.push(p);
       t.grossDwt += (p.grossDwt || 0);
       if (p.ts < t.ts) { t.ts = p.ts; t.firstId = p.id; }
     });
     return order.map(function (k) { return byKey[k]; });
   }
+
+  // A hidden line item that carries a manual receipt-total override delta. It
+  // has a metal + price so it counts in the books, but no weight and is never
+  // rendered as a visible receipt row.
+  function isAdjustment(rec) { return !!(rec && rec.adjustment); }
 
   // Open = not yet sold to a refinery.
   function isOpen(rec) { return !rec.settlementId; }
@@ -945,11 +964,13 @@
           // In edit mode, soft-delete the line items that were removed from the txn.
           var keptIds = {}; recs.forEach(function (r) { keptIds[r.id] = true; });
           var removed = editState ? editState.original.filter(function (p) { return !keptIds[p.id]; }) : [];
+          var staleAdj = (editState && editState.adjLines) ? editState.adjLines : [];
           return Promise.all(
             recs.map(function (r) { return saveRecord("purchases", r); })
               .concat(removed.map(function (p) { return deleteRecord("purchases", p); }))
+              .concat(staleAdj.map(function (p) { return deleteRecord("purchases", p); }))
           ).then(function () {
-            return recomputeAffectedSettlements(recs.concat(removed));
+            return recomputeAffectedSettlements(recs.concat(removed).concat(staleAdj));
           }).then(function () {
             var tot = recs.reduce(function (s, r) { return s + r.price; }, 0);
             toast("Saved " + order + " · " + recs.length + " item" + (recs.length === 1 ? "" : "s") + " · " + P.money(tot), "ok");
@@ -981,11 +1002,15 @@
     // --- boot the form ---
     if (editTxnId) {
       livePurchases().then(function (all) {
-        var mine = all.filter(function (p) { return p.txnId === editTxnId || p.id === editTxnId; });
+        var mineAll = all.filter(function (p) { return p.txnId === editTxnId || p.id === editTxnId; });
+        // A hidden total-override adjustment line is not user-editable here;
+        // redefining the transaction's line items clears any stale override.
+        var adjLines = mineAll.filter(isAdjustment);
+        var mine = mineAll.filter(function (p) { return !isAdjustment(p); });
         if (!mine.length) { toast("Transaction not found.", "warn"); go("/transactions"); return; }
         mine.sort(function (a, b) { return a.ts - b.ts || (a.id < b.id ? -1 : 1); });
         var p0 = mine[0];
-        editState = { txnId: p0.txnId || DB.uid("txn"), order: p0.order, date: p0.date, original: mine.slice() };
+        editState = { txnId: p0.txnId || DB.uid("txn"), order: p0.order, date: p0.date, original: mine.slice(), adjLines: adjLines };
         tx.date = p0.date;
         tx.payout = (p0.payoutPercent != null ? p0.payoutPercent : cfg.defaultPayout);
         tx.customer = p0.clientName || "";
@@ -1105,7 +1130,7 @@
           (items.some(function (x) { return x.settlementId; }) ? '<div class="muted small">This transaction is part of a closed lot — edits recompute that lot.</div>' : "") +
           '<div class="row-gap save-row">' +
             (p.deleted ? "" : '<a id="editBtn" class="btn btn-ghost btn-xl" data-go="edit/' + esc(p.txnId || p.id) + '">✎ Edit</a>') +
-            (p.deleted ? "" : '<button id="editPrintBtn" class="btn btn-ghost btn-xl">＄ Adjust &amp; Print</button>') +
+            (p.deleted ? "" : '<button id="editPrintBtn" class="btn btn-ghost btn-xl">＄ Edit Total &amp; Print</button>') +
             '<button id="printBtn" class="btn btn-primary btn-xl">🖨  Print Receipt</button>' +
           "</div>" +
           '<div class="card receipt-simple" id="receipt">' + receiptHtml(items, b) + "</div>";
@@ -1126,21 +1151,24 @@
   // Plain typewriter receipt matching Screenshot 2026-06-16 at 2.43.45 PM.
   // Renders every line item in the transaction; TOTAL sums them.
   function receiptHtml(items, b) {
-    var p0 = items[0];
-    var metals = items.map(function (i) { return i.metal; }).filter(function (m, idx, a) { return a.indexOf(m) === idx; });
+    // TOTAL sums every record (so a hidden adjustment-line override is included),
+    // but only real line items are rendered as rows.
+    var total = items.reduce(function (s, i) { return s + i.price; }, 0);
+    var visible = items.filter(function (i) { return !isAdjustment(i); });
+    var p0 = visible[0] || items[0];
+    var metals = visible.map(function (i) { return i.metal; }).filter(function (m, idx, a) { return a.indexOf(m) === idx; });
     var titleMetal = (metals.length === 1) ? P.metalByKey(metals[0]).label.toUpperCase() + " " : "";
     // KT column: gold shows "14K"; silver/platinum show "Silver - 925" etc., so
     // the header stays "KT" even when every row is non-gold.
     var ktHead = "KT";
-    var total = items.reduce(function (s, i) { return s + i.price; }, 0);
 
     // One price line per distinct metal that has a price.
     var priceLines = metals.map(function (m) {
-      var it = items.filter(function (i) { return i.metal === m && i.metalPrice != null; })[0];
+      var it = visible.filter(function (i) { return i.metal === m && i.metalPrice != null; })[0];
       return it ? "<div>" + P.metalByKey(m).label + " Price: " + P.money(it.metalPrice) + " / oz</div>" : "";
     }).join("");
 
-    var rows = items.map(function (p) {
+    var rows = visible.map(function (p) {
       var isGold = (p.metal === "gold");
       var ktVal = isGold
         ? ((p.karat != null ? p.karat : "") + "K")
@@ -1173,13 +1201,21 @@
   }
 
   // After saving a purchase, pop the receipt with EDITABLE amounts so the owner
-  // can nudge a line a few dollars (per-client courtesy) before printing. Edits
-  // rewrite price / pricePerUnit / pricePerDwt so every downstream total (lot
-  // expenses, day summary, Balance) stays accurate.
+  // can nudge figures before printing. Every field is INDEPENDENT and fully
+  // manual: editing a line AMOUNT changes only that line, and the TOTAL is its
+  // own editable field that does NOT auto-recalculate from the lines. Whatever
+  // you type into TOTAL becomes the transaction's official total in the books
+  // — it is persisted as a hidden `adjustment` line carrying the difference
+  // between your total and the sum of the line amounts, so expenses, the
+  // current lot, day summaries, settlements and Balance all reflect it.
   function editableReceiptFlow(recs, business, onDone) {
     recs = recs.slice().sort(function (a, b) { return a.ts - b.ts || (a.id < b.id ? -1 : 1); });
+    // Split real line items from any existing total-override adjustment line.
+    var lines = recs.filter(function (p) { return !isAdjustment(p); });
+    var existingAdj = recs.filter(isAdjustment)[0] || null;
+    var initTotal = recs.reduce(function (s, p) { return s + (p.price || 0); }, 0);
     function rowsHtml() {
-      return recs.map(function (p) {
+      return lines.map(function (p) {
         var isGold = (p.metal === "gold");
         var ktVal = isGold ? ((p.karat != null ? p.karat : "") + "K")
           : (P.metalByKey(p.metal).label + " - " + (p.mille != null ? p.mille : P.mille(p.fineness || 0)));
@@ -1190,28 +1226,25 @@
           '<td><input class="er-amt" data-id="' + esc(p.id) + '" inputmode="decimal" type="text" value="' + (Math.round((p.price || 0) * 100) / 100) + '"></td></tr>';
       }).join("");
     }
-    var initTotal = recs.reduce(function (s, p) { return s + (p.price || 0); }, 0);
     modal(
-      "<h2>Receipt — adjust amounts</h2>" +
-      '<div class="muted small">Edit any AMOUNT before printing (e.g. add a few dollars). Expenses update automatically.</div>' +
+      "<h2>Receipt — edit invoice total &amp; amounts</h2>" +
+      '<div class="muted small">You can edit each item AMOUNT and/or the INVOICE TOTAL below. Nothing recalculates automatically — only the number you change changes. Whatever you type as the INVOICE TOTAL is what the books use.</div>' +
       '<div class="card receipt-simple er-receipt"><table class="rs-table"><thead><tr>' +
         "<th>KT</th><th>UNIT</th><th>WEIGHT</th><th>PRICE</th><th>AMOUNT</th></tr></thead><tbody>" + rowsHtml() + "</tbody></table>" +
-        '<div class="rs-total">TOTAL: <span id="erTotal">' + P.money0(initTotal) + "</span></div></div>" +
+        '<div class="rs-total"><label for="erTotal">INVOICE TOTAL:</label> <input id="erTotal" class="er-total-input" inputmode="decimal" type="text" value="' + (Math.round(initTotal * 100) / 100) + '"></div></div>' +
       '<div class="modal-actions"><button class="btn btn-ghost" id="erSkip">Done (no print)</button>' +
       '<button class="btn btn-primary" id="erPrint">Save &amp; Print</button></div>',
       function (wrap, close) {
-        function total() {
-          return recs.reduce(function (s, p) {
-            var el = wrap.querySelector('.er-amt[data-id="' + p.id + '"]');
-            var v = el ? parseFloat(el.value) : p.price;
-            return s + (isFinite(v) ? v : 0);
-          }, 0);
+        // NOTE: intentionally no auto-recalc listener — line AMOUNT edits do not
+        // touch the TOTAL field, and vice versa. Each is manual.
+        function readTotal() {
+          var el = $("#erTotal", wrap);
+          var v = el ? parseFloat(el.value) : initTotal;
+          return isFinite(v) ? v : initTotal;
         }
-        wrap.addEventListener("input", function (e) {
-          if (e.target.classList.contains("er-amt")) $("#erTotal", wrap).textContent = P.money0(total());
-        });
         function apply() {
-          return Promise.all(recs.map(function (p) {
+          // 1) Persist each line's edited amount independently.
+          var saves = lines.map(function (p) {
             var el = wrap.querySelector('.er-amt[data-id="' + p.id + '"]');
             var v = el ? parseFloat(el.value) : p.price;
             if (!isFinite(v) || v < 0) v = p.price || 0;
@@ -1220,14 +1253,60 @@
             if (weight) p.pricePerUnit = v / weight;
             if (p.grossDwt) p.pricePerDwt = v / p.grossDwt;
             return saveRecord("purchases", p);
-          })).then(function () { return recomputeAffectedSettlements(recs); });
+          });
+          // 2) Reconcile the manual TOTAL via a hidden adjustment line.
+          var sumLines = lines.reduce(function (s, p) { return s + (p.price || 0); }, 0);
+          var delta = Math.round((readTotal() - sumLines) * 100) / 100;
+          var primary = lines[0] || existingAdj;
+          var affected = recs.slice();
+          if (primary && !primary.txnId) {
+            // A solo purchase needs a shared txnId so the adjustment groups with it.
+            var newTxn = DB.uid("txn");
+            lines.forEach(function (p) { p.txnId = newTxn; });
+          }
+          var txnId = primary ? primary.txnId : null;
+          if (Math.abs(delta) >= 0.005 && primary) {
+            var adj = existingAdj || {
+              id: DB.uid("adj"), adjustment: true,
+              order: primary.order, date: primary.date, ts: (primary.ts || nowTs()) + 1,
+              clientId: primary.clientId, clientName: primary.clientName,
+              clientPhone: primary.clientPhone, clientEmail: primary.clientEmail,
+              purityLabel: "Adjustment"
+            };
+            adj.txnId = txnId;
+            adj.adjustment = true;
+            adj.metal = primary.metal;                 // delta belongs to the primary line's metal
+            adj.price = delta;
+            adj.grossDwt = 0; adj.weight = 0;
+            adj.karat = null; adj.fineness = null; adj.mille = null;
+            adj.settlementId = primary.settlementId || null; // stay in the same lot/bucket
+            adj.stockId = primary.stockId || null;
+            adj.deleted = false;
+            saves.push(saveRecord("purchases", adj));
+            if (affected.indexOf(adj) < 0) affected.push(adj);
+          } else if (existingAdj) {
+            // Total now equals the line sum — drop the override entirely.
+            saves.push(deleteRecord("purchases", existingAdj));
+          }
+          return Promise.all(saves).then(function () { return recomputeAffectedSettlements(affected); });
+        }
+        function printItems() {
+          // Include the adjustment so the printed TOTAL matches what was entered.
+          var sumLines = lines.reduce(function (s, p) { return s + (p.price || 0); }, 0);
+          var delta = Math.round((readTotal() - sumLines) * 100) / 100;
+          var out = lines.slice();
+          if (Math.abs(delta) >= 0.005 && lines[0]) {
+            out.push({ adjustment: true, metal: lines[0].metal, price: delta, grossDwt: 0 });
+          }
+          return out;
         }
         $("#erSkip", wrap).addEventListener("click", function () {
           apply().then(function () { close(); if (onDone) onDone(); });
         });
         $("#erPrint", wrap).addEventListener("click", function () {
+          var items = printItems();
           apply().then(function () {
-            $("#print-area").innerHTML = '<div class="receipt-simple">' + receiptHtml(recs, business) + "</div>";
+            $("#print-area").innerHTML = '<div class="receipt-simple">' + receiptHtml(items, business) + "</div>";
             close();
             window.print();
             if (onDone) onDone();
@@ -1911,7 +1990,7 @@
       "</div>" +
       field("Refinery sale amount ($)", '<input id="esSale" class="big-input huge" inputmode="decimal" type="text" value="' + esc(st.saleAmount != null ? st.saleAmount : "") + '">') +
       field("Reference / notes", '<input id="esRef" class="big-input" type="text" value="' + esc(st.reference || "") + '">') +
-      '<div class="muted small">Accumulated expenses ' + P.money(st.accumulatedExpenses || 0) + " — profit / loss updates from the sale amount.</div>" +
+      '<div class="muted small">Accumulated expenses ' + P.money(st.accumulatedExpenses || 0) + " ��� profit / loss updates from the sale amount.</div>" +
       '<div class="modal-actions"><button class="btn btn-ghost" id="esCancel">Cancel</button>' +
       '<button class="btn btn-primary" id="esSave">Save Changes</button></div>',
       function (wrap, close) {
