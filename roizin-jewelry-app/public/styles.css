@@ -1,0 +1,524 @@
+/* =====================================================================
+   Roizin Jewelry Co. — styles
+   White background everywhere. Brand colors as accents. Big, high-contrast
+   type readable by an 80-year-old. Big touch targets. iPad/iPhone first.
+   ===================================================================== */
+/* In-app navigation links use data-go instead of href, so restore the
+   pointer affordance and inherit link styling for plain anchors. */
+[data-go] { cursor: pointer; }
+a[data-go] { text-decoration: none; }
+a.lnk[data-go] { color: var(--red); text-decoration: underline; }
+
+:root {
+  --red: #96191C;
+  --red-dark: #7a1417;
+  --black: #1A1A1A;
+  --gold: #C9A227;
+  --platinum: #A7ADB7;
+  --silver: #BFC3C9;
+  --ink: #1A1A1A;
+  --muted: #5b5b5b;        /* still dark enough to read; never thin gray for important text */
+  --line: #e3e3e3;
+  --bg: #ffffff;
+  --warn: #8a4b00;
+  --warn-bg: #fff4e3;
+  --ok: #1f6b3a;
+  --radius: 16px;
+  --touch: 58px;           /* big touch target */
+  --maxw: 760px;
+  /* Motion + depth tokens (polish). Layered, brand-tinted, low-opacity shadows
+     give a base -> elevated -> floating elevation system. */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --shadow-sm: 0 1px 2px rgba(26,26,26,.05), 0 2px 6px rgba(150,25,28,.045);
+  --shadow-md: 0 2px 6px rgba(26,26,26,.06), 0 10px 26px rgba(150,25,28,.07);
+  --shadow-lg: 0 10px 26px rgba(26,26,26,.13), 0 24px 56px rgba(26,26,26,.17);
+  --focus-ring: 0 0 0 3px rgba(150,25,28,.32);
+  --space: 16px;
+  font-size: 18px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.18rem;       /* ~21px body */
+  line-height: 1.4;
+  -webkit-text-size-adjust: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+h1, h2, h3, .brandface { font-family: "Playfair Display", Georgia, serif; letter-spacing: -0.02em; }
+
+a { color: var(--red); text-decoration: none; }
+b { font-weight: 700; }
+
+/* ---------- Header ---------- */
+.app-header {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 16px calc(12px); background: #fff;
+  border-bottom: 1px solid var(--line);
+  padding-top: calc(12px + env(safe-area-inset-top));
+}
+.header-logo { height: 40px; width: auto; display: block; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+.fix-chip {
+  font-size: 0.95rem; color: var(--ink); text-align: right; line-height: 1.15;
+  padding: 6px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff;
+}
+.fix-chip b { color: var(--red); font-size: 1.05rem; }
+.fix-chip span { display: block; color: var(--muted); font-size: 0.78rem; }
+.warn-chip { color: var(--warn); font-weight: 600; }
+
+.chip { font-size: 0.85rem; font-weight: 600; padding: 7px 12px; border-radius: 999px; background: #eee; color: #444; white-space: nowrap; }
+.chip-ok { background: #e7f4ec; color: var(--ok); }
+.chip-sync { background: #fff4e3; color: var(--warn); }
+.chip-warn { background: #fdeaea; color: var(--red); }
+
+/* ---------- Nav ---------- */
+.app-nav {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; gap: 6px; overflow-x: auto; padding: 10px 12px;
+  background: #fff; border-bottom: 1px solid var(--line);
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.app-nav::-webkit-scrollbar { display: none; }
+.nav-link {
+  flex: 0 0 auto; min-height: 48px; display: flex; align-items: center;
+  padding: 0 18px; border-radius: 12px; font-weight: 600; font-size: 1.05rem;
+  color: var(--black); background: #f4f4f4;
+}
+.nav-link.active { background: var(--red); color: #fff; }
+
+/* ---------- Layout ---------- */
+.view { max-width: var(--maxw); margin: 0 auto; padding: 18px 16px 80px; }
+.view-title { font-size: 2rem; margin: 6px 0 16px; font-weight: 800; }
+.sub { font-size: 1.4rem; margin: 26px 0 10px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.row-gap { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+
+.card {
+  background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius);
+  padding: 18px; margin-bottom: 16px;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* ---------- Fields & inputs ---------- */
+.field { display: block; margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field-label { display: block; font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; color: var(--black); }
+.big-input, select.big-input {
+  width: 100%; min-height: var(--touch); padding: 12px 16px; font-size: 1.25rem;
+  border: 2px solid #d4d4d4; border-radius: 12px; background: #fff; color: var(--ink);
+  font-family: inherit; appearance: none; -webkit-appearance: none;
+}
+.big-input:focus { outline: none; border-color: var(--red); }
+.big-input.huge { font-size: 1.7rem; font-weight: 700; min-height: 66px; }
+select.big-input {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%231A1A1A' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat; background-position: right 14px center; padding-right: 44px;
+}
+
+/* Segmented control */
+.seg { display: flex; gap: 8px; flex-wrap: wrap; }
+.seg-btn {
+  flex: 1 1 auto; min-height: var(--touch); padding: 8px 14px; font-size: 1.1rem; font-weight: 600;
+  border: 2px solid #d4d4d4; border-radius: 12px; background: #fff; color: var(--black);
+  font-family: inherit; cursor: pointer;
+}
+.seg-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--touch); padding: 12px 22px; font-size: 1.15rem; font-weight: 700;
+  border-radius: 12px; border: 2px solid transparent; cursor: pointer; font-family: inherit;
+}
+.btn-xl { width: 100%; min-height: 64px; font-size: 1.35rem; margin-bottom: 12px; }
+.btn-primary { background: var(--red); color: #fff; }
+.btn-primary:active { background: var(--red-dark); }
+.btn-primary:disabled { background: #d9bcbc; color: #fff; cursor: not-allowed; }
+.btn-ghost { background: #fff; color: var(--black); border-color: #d4d4d4; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:active { background: var(--red-dark); }
+.btn-link { background: none; border: none; color: var(--red); font-weight: 700; font-size: 1.05rem; cursor: pointer; padding: 8px; font-family: inherit; }
+
+/* ---------- Transaction-history day dividers ---------- */
+.day-divider {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 18px 0 8px; padding: 8px 14px;
+  background: #faf3f3; border-left: 4px solid var(--red); border-radius: 8px;
+}
+.day-divider:first-child { margin-top: 4px; }
+.day-date { font-weight: 800; font-size: 1.1rem; color: var(--black); }
+.day-stats { font-weight: 700; color: var(--red); font-size: 1rem; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.day-metal {
+  font-size: 0.9rem; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  background: #fff; border: 1px solid var(--line); color: var(--black); white-space: nowrap;
+}
+.day-metal b { font-weight: 800; }
+.day-metal.metal-gold { border-color: #d9a441; color: #8a5a00; }
+.day-metal.metal-silver { border-color: #9ca3af; color: #4b5563; }
+.day-metal.metal-platinum { border-color: #7c8aa0; color: #334155; }
+
+/* ---------- Open-lot card (Lots view) ---------- */
+.lot-open { border: 2px solid var(--red); }
+.lot-open .btn { margin-top: 12px; margin-bottom: 0; }
+
+/* ---------- Buy breakdown ---------- */
+.breakdown { background: #fafafa; }
+.bd-grid { display: flex; flex-direction: column; gap: 6px; }
+.bd-row { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 1.1rem; }
+.bd-row span { color: var(--muted); }
+.bd-row b { text-align: right; }
+.price-result { margin-top: 16px; text-align: center; }
+.price-label { font-size: 1.1rem; color: var(--muted); font-weight: 600; }
+.price-big { font-size: 3.4rem; font-weight: 800; color: var(--red); line-height: 1.05; }
+.formula { margin-top: 10px; text-align: center; color: var(--muted); font-size: 0.95rem; }
+
+/* ---------- Results / search ---------- */
+.results { margin-top: 8px; }
+.result-row {
+  display: flex; flex-direction: column; width: 100%; text-align: left;
+  min-height: 56px; padding: 12px 14px; margin-bottom: 6px; border-radius: 10px;
+  border: 1.5px solid var(--line); background: #fff; cursor: pointer; font-family: inherit;
+}
+.result-row b { font-size: 1.15rem; }
+.result-row span { color: var(--muted); font-size: 0.95rem; }
+.result-row.add-new { color: var(--red); font-weight: 700; }
+.chosen-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* ---------- Lists ---------- */
+.list { display: flex; flex-direction: column; gap: 10px; }
+.list-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 64px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff;
+}
+.list-row .amt { font-size: 1.3rem; font-weight: 800; text-align: right; }
+.chev { font-size: 1.8rem; color: var(--silver); }
+
+/* ---------- KPIs ---------- */
+.kpi { display: flex; justify-content: space-between; margin-top: 12px; font-size: 1.15rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.kpi-grid.kpi-3 { grid-template-columns: repeat(3, 1fr); }
+.kpi-grid.kpi-2 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 600px) { .kpi-grid, .kpi-grid.kpi-3 { grid-template-columns: repeat(2, 1fr); } }
+.kpi-cell, .kpi-grid .kpi-cell { display: flex; flex-direction: column; align-items: flex-start; padding: 10px; background: #fafafa; border-radius: 10px; }
+.kpi-cell b { font-size: 1.4rem; }
+.kpi-cell span { color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- Melt / P&L ---------- */
+.meltloss { background: #fafafa; }
+.pl { text-align: center; }
+.pl-label { font-size: 1.1rem; color: var(--muted); font-weight: 600; }
+.pl-big { font-size: 3rem; font-weight: 800; line-height: 1.05; }
+.pl-big.pos, .pos { color: var(--ok); }
+.pl-big.neg, .neg { color: var(--red); }
+.pl-big.pending { font-size: 1.6rem; color: var(--warn); }
+
+/* ---------- Tabs ---------- */
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab { min-height: 50px; padding: 10px 18px; border-radius: 12px; border: 2px solid #d4d4d4; background: #fff; font-weight: 700; font-size: 1.05rem; font-family: inherit; cursor: pointer; }
+.tab.active { background: var(--black); color: #fff; border-color: var(--black); }
+
+/* ---------- Dashboard ---------- */
+.accum-card { text-align: center; }
+.accum-card .price-big { margin: 6px 0; }
+.accum-note { margin-top: 8px; }
+.accum-cta { margin-top: 16px; }
+.accum-twin { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.accum-twin .price-big { font-size: 2.5rem; }
+.accum-unit { font-size: 1.2rem; color: var(--muted); font-weight: 700; }
+@media (max-width: 480px) { .accum-twin { grid-template-columns: 1fr; } }
+.save-row .btn-xl { flex: 1; }
+.save-row #clearBtn { flex: 0 0 28%; }
+.items-tot { margin-top: 12px; }
+
+/* ---------- New Transaction line-item table (v5) ---------- */
+.nt-head { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: 16px; }
+.nt-head .field { margin-bottom: 0; }
+.nt-head .field-label { letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-size: 0.85rem; }
+@media (max-width: 700px) { .nt-head { grid-template-columns: 1fr; } }
+
+.nt-table-card { padding-top: 12px; }
+.lit-cols { } /* shared grid template */
+.lit-head, .lit-row {
+  display: grid;
+  grid-template-columns: minmax(90px,1.1fr) minmax(82px,0.9fr) minmax(70px,0.8fr) minmax(84px,1fr) minmax(104px,1.25fr) minmax(80px,1fr) 42px;
+  gap: 10px; align-items: center;
+}
+.lit-head { padding: 0 2px 8px; border-bottom: 1.5px solid var(--line); }
+.lit-head span { font-size: 0.8rem; font-weight: 700; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+.lit-row { padding: 12px 2px; border-bottom: 1px dashed var(--line); }
+.lit-cell { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.lit-lbl { display: none; font-size: 0.72rem; font-weight: 700; letter-spacing: .05em; color: var(--muted); text-transform: uppercase; }
+.lit-cell .big-input { min-height: 50px; font-size: 1.1rem; padding: 8px 10px; }
+.lit-cell select.big-input { padding-right: 32px; background-position: right 8px center; }
+.lit-price { font-size: 1.25rem; font-weight: 800; color: var(--red); text-align: left; padding: 8px 2px; }
+.lit-ozt { color: var(--red); font-weight: 700; }
+.lit-perunit { color: var(--red); font-weight: 800; }
+.lit-sub { font-size: 0.78rem; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 4px; }
+.lit-spot { width: 100%; min-height: 38px; font-size: 0.95rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font-family: inherit; }
+.lit-submeta { white-space: nowrap; }
+.lit-resetbtn { font-size: 0.78rem; font-weight: 700; padding: 2px 6px; }
+.lit-amt { font-size: 1.2rem; font-weight: 800; }
+.lit-x {
+  justify-self: center; width: 36px; height: 36px; border-radius: 999px; border: none;
+  background: #fbeaea; color: var(--red); font-size: 1.4rem; line-height: 1; cursor: pointer;
+}
+.lit-x:active { background: #f5d3d3; }
+.nt-add { margin-top: 12px; }
+
+@media (max-width: 760px) {
+  .lit-head { display: none; }
+  .lit-row {
+    grid-template-columns: 1fr 1fr; gap: 12px; position: relative;
+    border: 1.5px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px;
+  }
+  .lit-lbl { display: block; }
+  .lit-x { position: absolute; top: 8px; right: 8px; }
+}
+
+.nt-total {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: #fafafa; border: 2px solid var(--red);
+}
+.nt-total-label { font-size: 0.85rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.nt-total-amt { font-family: "Playfair Display", Georgia, serif; font-size: 2.8rem; font-weight: 800; color: var(--red); line-height: 1; }
+.nt-fix { margin-bottom: 12px; }
+
+/* ---------- Delete rows (spec v3 §6) ---------- */
+.del-row { padding: 0; }
+.del-main {
+  flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 64px; padding: 14px 16px; color: inherit;
+}
+.del-main.del-static { cursor: default; }
+.del-btn {
+  flex: 0 0 auto; align-self: stretch; min-width: 58px; border: none; border-left: 1.5px solid var(--line);
+  background: #fff; color: var(--red); font-size: 1.3rem; cursor: pointer; border-radius: 0 12px 12px 0;
+}
+.del-btn:active { background: #fdeaea; }
+.confirm-msg { font-size: 1.1rem; line-height: 1.45; }
+.pay-intro, .lots-note { margin-bottom: 12px; }
+.scope-note { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+
+/* ---------- Misc ---------- */
+.muted { color: var(--muted); }
+.small { font-size: 0.9rem; }
+.ok-text { color: var(--ok); }
+.warn { color: var(--warn); background: var(--warn-bg); padding: 12px 14px; border-radius: 10px; font-weight: 600; }
+.warn a { color: var(--warn); text-decoration: underline; }
+.hidden { display: none !important; }
+.lot-summary .muted { font-size: 1.05rem; }
+.lot-checks { display: flex; flex-direction: column; gap: 8px; }
+.check { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; min-height: 44px; }
+.check input { width: 26px; height: 26px; }
+.fix-state { margin: 8px 0 14px; }
+.fix-big { font-size: 2.4rem; font-weight: 800; color: var(--red); }
+.sync-detail { margin-top: 6px; }
+
+/* ---------- Toasts ---------- */
+.toasts { position: fixed; left: 0; right: 0; bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 60; pointer-events: none; }
+.toast { max-width: 90%; padding: 14px 20px; border-radius: 12px; background: var(--black); color: #fff; font-weight: 600; font-size: 1.1rem; opacity: 0; transform: translateY(10px); transition: opacity .25s ease, transform .25s var(--ease); box-shadow: var(--shadow-lg); }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.ok { background: var(--ok); }
+.toast.warn { background: var(--warn); }
+
+/* ---------- Modal ---------- */
+.modal-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 70; padding: 0; }
+@media (min-width: 600px) { .modal-wrap { align-items: center; padding: 20px; } }
+.modal { background: #fff; width: 100%; max-width: 560px; border-radius: 20px 20px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+@media (min-width: 600px) { .modal { border-radius: 20px; } }
+.modal h2 { margin: 0 0 16px; font-size: 1.6rem; }
+.modal-actions { display: flex; gap: 12px; margin-top: 18px; }
+.modal-actions .btn { flex: 1; }
+
+/* ---------- Passcode gate ---------- */
+#gate { position: fixed; inset: 0; background: #fff; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.gate-card { width: 100%; max-width: 420px; text-align: center; }
+.gate-logo { max-width: 280px; width: 80%; margin-bottom: 28px; }
+.gate-title { font-family: "Playfair Display", serif; font-size: 1.8rem; margin-bottom: 18px; }
+.gate-input { text-align: center; letter-spacing: 0.3em; margin-bottom: 16px; }
+
+/* ---------- Receipt — plain typewriter style (matches screenshot) ---------- */
+.receipt-simple {
+  color: #000; background: #fff;
+  font-family: "Courier New", Courier, ui-monospace, monospace;
+  max-width: 520px; margin-left: auto; margin-right: auto;
+}
+.rs-title { text-align: center; font-weight: 700; font-size: 1.8rem; letter-spacing: 0.18em; margin: 4px 0 8px; }
+.rs-sub { text-align: center; font-size: 0.85rem; line-height: 1.5; }
+.rs-hr { border: none; border-top: 1px solid #000; margin: 12px 0; }
+.rs-h2 { text-align: center; font-weight: 700; font-size: 1.05rem; letter-spacing: 0.05em; margin-bottom: 4px; }
+.rs-rcpt { text-align: center; font-size: 0.8rem; color: #555; margin-bottom: 16px; }
+.rs-meta { font-size: 0.95rem; line-height: 1.7; margin-bottom: 14px; }
+.rs-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 6px 0 4px; }
+.rs-table th { text-align: left; font-weight: 700; border-bottom: 1px solid #000; padding: 6px 6px; font-size: 0.8rem; letter-spacing: 0.03em; }
+.rs-table td { padding: 8px 6px; border-bottom: 1px solid #000; }
+.rs-table th:last-child, .rs-table td:last-child,
+.rs-table th:nth-child(4), .rs-table td:nth-child(4) { text-align: right; }
+.rs-total { text-align: right; font-weight: 700; font-size: 1.5rem; margin: 18px 0 24px; }
+.rs-thanks { text-align: center; font-size: 0.85rem; color: #555; }
+
+/* ---------- Per-metal lots (Dashboard + Lots) ---------- */
+.section-label { margin: 4px 0 8px; font-weight: 700; }
+.metal-lots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+@media (max-width: 720px) { .metal-lots { grid-template-columns: 1fr; } }
+.metal-lots .accum-card { text-align: left; }
+.metal-lots .accum-twin { grid-template-columns: 1fr 1fr; }
+.metal-lots .accum-twin .price-big { font-size: 1.7rem; }
+.metal-lots .accum-cta { display: inline-block; margin-top: 10px; }
+.accum-card.metal-gold { border-top: 4px solid #d9a441; }
+.accum-card.metal-silver { border-top: 4px solid #9ca3af; }
+.accum-card.metal-platinum { border-top: 4px solid #7c8aa0; }
+
+/* ---------- Metal tag pill ---------- */
+.metal-tag {
+  display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 1px 8px;
+  border-radius: 999px; border: 1px solid var(--line); color: var(--black); vertical-align: middle;
+}
+.metal-tag.metal-gold { background: #fbf1dc; border-color: #d9a441; color: #8a5a00; }
+.metal-tag.metal-silver { background: #f1f3f5; border-color: #9ca3af; color: #4b5563; }
+.metal-tag.metal-platinum { background: #eef1f5; border-color: #7c8aa0; color: #334155; }
+.metal-tag.metal-mixed { background: #f5f5f5; color: var(--muted); }
+.metal-seg { margin-bottom: 12px; }
+
+/* ---------- Edit button (paired with delete on list rows) ---------- */
+.edit-btn {
+  flex: 0 0 auto; align-self: stretch; min-width: 52px; border: none; border-left: 1.5px solid var(--line);
+  background: #fff; color: var(--black); font-size: 1.15rem; cursor: pointer;
+}
+.edit-btn:active { background: #f0f0f0; }
+
+/* ---------- Custom-lot selectable transaction rows ---------- */
+.csel-row { cursor: pointer; }
+.csel-row .cchk,
+.csel-row .cstk { width: 22px; height: 22px; margin-right: 8px; vertical-align: middle; accent-color: var(--red); }
+/* Per-day header with a whole-day "Select all / Clear" toggle. */
+.csel-datehead {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin: 14px 2px 2px; padding: 4px 2px; border-bottom: 1px solid var(--line);
+}
+.csel-datehead:first-child { margin-top: 2px; }
+.csel-all { padding: 6px 8px; white-space: nowrap; }
+
+/* =====================================================================
+   POLISH (CLAUDE.md guardrails): depth, motion, and interactive states.
+   Motion is transform/opacity only, spring-eased; hover is gated behind a
+   real pointer so touch devices don't get sticky states. Focus-visible gives
+   an accessible brand ring on every control.
+   ===================================================================== */
+.card { box-shadow: var(--shadow-sm); }
+
+/* Consistent, spring-eased micro-motion on every interactive surface. */
+.btn, .seg-btn, .tab, .nav-link, .btn-link,
+.edit-btn, .del-btn, .stock-btn, .edit-chip,
+.list-row, .accum-card, .stock-card, .result-row {
+  transition: transform .12s var(--ease), box-shadow .16s var(--ease),
+              background-color .16s var(--ease), border-color .16s var(--ease), color .16s var(--ease);
+}
+
+/* Pressed feedback. */
+.btn:active, .seg-btn:active, .tab:active, .nav-link:active,
+.edit-chip:active, .result-row:active { transform: translateY(1px) scale(.99); }
+.btn-primary:active, .btn-danger:active { background: var(--red-dark); }
+
+/* Accessible focus ring (keyboard / assistive), no sticky outline on tap. */
+.btn:focus-visible, .seg-btn:focus-visible, .tab:focus-visible, .nav-link:focus-visible,
+.btn-link:focus-visible, .big-input:focus-visible, select.big-input:focus-visible,
+.edit-btn:focus-visible, .del-btn:focus-visible, .stock-btn:focus-visible, .edit-chip:focus-visible,
+.list-row a:focus-visible, .result-row:focus-visible, [data-go]:focus-visible,
+.cchk:focus-visible, .cstk:focus-visible {
+  outline: none; box-shadow: var(--focus-ring);
+}
+.big-input:focus-visible, select.big-input:focus-visible { border-color: var(--red); box-shadow: var(--focus-ring); }
+
+/* Hover — pointer devices only. */
+@media (hover: hover) {
+  .btn-primary:hover, .btn-danger:hover { background: var(--red-dark); }
+  .btn-ghost:hover { background: #faf6f6; border-color: var(--red); color: var(--red); }
+  .seg-btn:hover:not(.active) { border-color: var(--red); }
+  .tab:hover:not(.active) { border-color: var(--black); }
+  .nav-link:hover:not(.active) { background: #ececec; }
+  .btn-link:hover { text-decoration: underline; }
+  .list-row:hover { box-shadow: var(--shadow-sm); border-color: #d8d8d8; }
+  .result-row:hover { background: #faf6f6; }
+  .accum-card:hover, .stock-card:hover { box-shadow: var(--shadow-md); }
+  .edit-btn:hover, .del-btn:hover, .stock-btn:hover { background: #f6f2f2; }
+  .del-btn:hover { color: var(--red-dark); }
+  .edit-chip:hover { border-color: var(--red); color: var(--red); }
+}
+
+/* ---------- Card action row (metal-lot / stock card headers) ---------- */
+.card-actions { display: flex; align-items: center; gap: 8px; }
+.edit-chip {
+  min-width: 34px; min-height: 34px; padding: 0 8px; line-height: 1;
+  border: 1.5px solid var(--line); border-radius: 9px; background: #fff;
+  color: var(--black); font-size: 1rem; cursor: pointer; font-family: inherit;
+}
+.adj-note { margin-top: 6px; color: var(--red); font-weight: 600; }
+
+/* ---------- Small button variant ---------- */
+.btn-sm { min-height: 42px; padding: 8px 16px; font-size: 1rem; }
+
+/* ---------- Live-stock cards (dashboard) ---------- */
+.stock-card { text-align: left; box-shadow: var(--shadow-sm); }
+.stock-card.metal-gold { border-top: 4px solid #d9a441; }
+.stock-card.metal-silver { border-top: 4px solid #9ca3af; }
+.stock-card.metal-platinum { border-top: 4px solid #7c8aa0; }
+.stock-actions { margin-top: 12px; gap: 10px; }
+.stock-actions .btn { flex: 1 1 auto; }
+
+/* ---------- Live-stock management view ---------- */
+.stock-metal { box-shadow: var(--shadow-sm); }
+.stock-metal.metal-gold { border-top: 4px solid #d9a441; }
+.stock-metal.metal-silver { border-top: 4px solid #9ca3af; }
+.stock-metal.metal-platinum { border-top: 4px solid #7c8aa0; }
+.stock-metal-h { margin: 0; }
+
+/* ---------- Move-to-stock button (Transaction History rows) ---------- */
+.stock-btn {
+  flex: 0 0 auto; align-self: stretch; min-width: 52px; border: none;
+  border-left: 1.5px solid var(--line); background: #fff; color: var(--black);
+  font-size: 1.15rem; cursor: pointer;
+}
+.stock-btn:active { transform: none; background: #f0f0f0; }
+
+/* ---------- New-transaction fix chips ---------- */
+.nt-fix { margin-top: 6px; }
+.nt-fixchip { display: inline-block; margin-right: 10px; }
+.fix-sep { color: var(--line); }
+
+/* ---------- Editable receipt (amount inputs) ---------- */
+.er-receipt { margin-top: 12px; }
+.er-amt {
+  width: 100%; min-height: 40px; padding: 6px 10px; font-size: 1.05rem; font-weight: 700;
+  border: 2px solid var(--red); border-radius: 8px; text-align: right; font-family: inherit;
+  background: #fff; color: var(--ink);
+}
+.er-amt:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ---------- Lot "move items" button + move list ---------- */
+.lot-move { display: inline-block; margin-top: 8px; }
+.mi-list { max-height: 46vh; overflow-y: auto; }
+
+/* ---------- Balance ---------- */
+.bal-card { display: block; text-align: center; box-shadow: var(--shadow-sm); color: inherit; }
+.bal-card .price-big { margin: 6px 0; font-size: 2.4rem; }
+@media (hover: hover) { .bal-card:hover { box-shadow: var(--shadow-md); } }
+
+#print-area { display: none; }
+
+/* ---------- PRINT: show only the receipt (spec §4) ---------- */
+@media print {
+  body { background: #fff; }
+  .app-header, .app-nav, .view, .toasts, #gate, .modal-wrap { display: none !important; }
+  #print-area { display: block !important; }
+  #print-area .receipt-simple { border: none; padding: 0; margin: 0 auto; font-size: 11pt; }
+  @page { margin: 14mm; }
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Roizin Gold">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Roizin Jewelry Co. — Gold Buying</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Passcode gate (spec §13) -->
+  <div id="gate" class="hidden"></div>
+
+  <!-- App chrome (hidden when printing) -->
+  <header class="app-header" id="appHeader">
+    <div class="header-left">
+      <img src="icons/logo.png" alt="Roizin Jewelry Co." class="header-logo">
+    </div>
+    <div class="header-right">
+      <div id="fixChip" class="fix-chip"></div>
+      <div id="syncChip" class="chip"></div>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="appNav">
+    <a class="nav-link" data-route="dashboard" data-go="dashboard">Dashboard</a>
+    <a class="nav-link" data-route="new" data-go="new">New Transaction</a>
+    <a class="nav-link" data-route="transactions" data-go="transactions">Transaction History</a>
+    <a class="nav-link" data-route="clients" data-go="clients">Client List</a>
+    <a class="nav-link" data-route="melt" data-go="melt">Melt &amp; Refinery</a>
+    <a class="nav-link" data-route="lots" data-go="lots">Lots</a>
+    <a class="nav-link" data-route="stock" data-go="stock">Live Stock</a>
+    <a class="nav-link" data-route="balance" data-go="balance">Balance</a>
+    <a class="nav-link" data-route="settings" data-go="settings">Settings</a>
+  </nav>
+
+  <main id="view" class="view"></main>
+
+  <div id="toasts" class="toasts"></div>
+
+  <!-- Print-only receipt target (filled on demand, shown only in @media print) -->
+  <div id="print-area"></div>
+
+  <script src="pricing.js"></script>
+  <script src="db.js"></script>
+  <script src="sync.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
