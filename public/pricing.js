@@ -71,15 +71,6 @@
     return purityKey || "";
   }
 
-  // Fineness from a typed millesimal or decimal value. Silver/platinum purity
-  // is typed by hand as a millesimal (e.g. 925) — accept either form so 925 and
-  // .925 both yield 0.925. Returns 0 for anything non-numeric.
-  function finenessFromMille(v) {
-    var n = Number(v);
-    if (!isFinite(n) || n <= 0) return 0;
-    return n > 1 ? n / 1000 : n;
-  }
-
   // Numeric karat for a gold purity key (null for non-gold / unknown).
   function karatFor(metalKey, purityKey) {
     if (metalKey !== "gold") return null;
@@ -122,53 +113,28 @@
   // --- Units per troy ounce (price-per-unit conversion) -------------------
   var UNITS_PER_OZT = { ozt: 1, dwt: DWT_PER_OZT, g: GRAMS_PER_OZT };
 
-  // --- Per-metal fixed multipliers used by the payout formulas -------------
-  // silver:   payout/ozt = fix × 0.75 × purity
-  // platinum: payout/ozt = (fix − 35) × purity × 0.85
-  var SILVER_FACTOR = 0.75;
-  var PLAT_FACTOR = 0.85;
-  var PLAT_DEDUCT = 35;
-
-  // Payout per TROY OUNCE, before converting to the entered unit. Gold uses the
-  // karat purity factor and the typed payout % (rate). Silver and platinum use
-  // their own fixed formulas and ignore the payout % entirely.
-  //   gold:     (karat-0.5)/24 × rate × fix
-  //   silver:   fix × 0.75 × fineness
-  //   platinum: max(0, fix − 35) × fineness × 0.85
-  function payoutPerOzt(metal, marketPrice, karat, fineness, rate) {
-    var price = Number(marketPrice) || 0;
-    if (metal === "silver") return price * SILVER_FACTOR * (Number(fineness) || 0);
-    if (metal === "platinum") return Math.max(0, price - PLAT_DEDUCT) * (Number(fineness) || 0) * PLAT_FACTOR;
-    // gold (default)
-    var purityFrac = (karat != null) ? goldEffFineness(karat) : Number(fineness) || 0;
-    return purityFrac * (Number(rate) || 0) * price;
-  }
-
-  // --- The line-item payout calculation ------------------------------------
-  //   perOzt       = payoutPerOzt(metal, …)            (metal-specific formula)
-  //   pricePerUnit = perOzt ÷ unitsPerOzt[unit]        (dwt / g / ozt aware)
+  // --- The line-item payout calculation (v5 shared formula) ---------------
+  //   pricePerUnit = ((karat-0.5)/24) × rate × marketPrice ÷ unitsPerOzt[unit]
   //   amount       = pricePerUnit × weight
-  // marketPrice ($/ozt) = the metal's locked fix. Pass args.karat for gold,
-  // args.fineness for silver/platinum (typed millesimal → fraction).
+  // rate = typed payout % ÷ 100. marketPrice ($/ozt) = locked London fix
+  // (gold) or the manually-entered $/ozt (silver/platinum). purity factor is
+  // (karat-0.5)/24 for gold, else the fineness (e.g. .925). Pass args.karat for
+  // gold, args.fineness for silver/platinum.
   function calcLineItem(args) {
     var unit = args.unit || "dwt";
     var upo = UNITS_PER_OZT[unit] || DWT_PER_OZT;
-    var metal = args.metal || "gold";
-    var karat = (args.karat != null) ? Number(args.karat) : null;
-    var fineness = Number(args.fineness);
+    var purityFrac = (args.karat != null) ? goldEffFineness(args.karat) : Number(args.fineness);
     var rate = Number(args.rate);
     var marketPrice = Number(args.marketPrice);          // $/ozt
     var weight = Number(args.weight) || 0;
 
-    var perOzt = payoutPerOzt(metal, marketPrice, karat, fineness, rate);
-    var pricePerUnit = perOzt / upo;
+    var pricePerUnit = purityFrac * rate * marketPrice / upo;
     var amount = pricePerUnit * weight;
     var grossDwt = toDwt(weight, unit);                   // for the dwt accumulator
-    var purityFrac = (karat != null) ? goldEffFineness(karat) : fineness;
 
     return {
       unit: unit, weight: weight, grossDwt: grossDwt,
-      karat: karat,
+      karat: (args.karat != null) ? Number(args.karat) : null,
       purityFrac: purityFrac, rate: rate, marketPrice: marketPrice,
       pricePerUnit: pricePerUnit, amount: amount
     };
@@ -207,12 +173,7 @@
     MAX_KARAT: MAX_KARAT,
     METALS: METALS,
     DEFAULT_RATES: DEFAULT_RATES,
-    SILVER_FACTOR: SILVER_FACTOR,
-    PLAT_FACTOR: PLAT_FACTOR,
-    PLAT_DEDUCT: PLAT_DEDUCT,
     goldEffFineness: goldEffFineness,
-    payoutPerOzt: payoutPerOzt,
-    finenessFromMille: finenessFromMille,
     karatFor: karatFor,
     karatInRange: karatInRange,
     metalByKey: metalByKey,

@@ -7,8 +7,8 @@
   "use strict";
 
   var DB_NAME = "roizin-gold";
-  var DB_VERSION = 4;
-  var STORES = ["clients", "purchases", "lots", "settlements", "refinerySent", "payments", "livestock", "cash", "fixLocks", "queue", "meta"];
+  var DB_VERSION = 2;
+  var STORES = ["clients", "purchases", "lots", "settlements", "refinerySent", "payments", "fixLocks", "queue", "meta"];
 
   var _db = null;
 
@@ -24,31 +24,11 @@
         if (!db.objectStoreNames.contains("settlements"))  db.createObjectStore("settlements", { keyPath: "id" });
         if (!db.objectStoreNames.contains("refinerySent")) db.createObjectStore("refinerySent", { keyPath: "id" });
         if (!db.objectStoreNames.contains("payments"))     db.createObjectStore("payments", { keyPath: "id" });
-        if (!db.objectStoreNames.contains("livestock"))    db.createObjectStore("livestock", { keyPath: "id" }); // held metal + current-lot adjustments
-        if (!db.objectStoreNames.contains("cash"))         db.createObjectStore("cash", { keyPath: "id" }); // Balance: opening + emergent/fulfillment ledger
         if (!db.objectStoreNames.contains("fixLocks"))     db.createObjectStore("fixLocks", { keyPath: "key" }); // key = date|metal
         if (!db.objectStoreNames.contains("queue"))        db.createObjectStore("queue", { keyPath: "qid", autoIncrement: true });
         if (!db.objectStoreNames.contains("meta"))         db.createObjectStore("meta", { keyPath: "k" });
       };
-      // Another tab/PWA holding an older version open blocks this upgrade.
-      // Warn once so the store additions (e.g. the Balance "cash" store) aren't
-      // silently skipped, which would blank the dashboard/Balance views.
-      req.onblocked = function () {
-        try { console.warn("DB upgrade blocked — close other Roizin tabs/windows."); } catch (e) {}
-        try {
-          if (typeof window !== "undefined" && !window.__roizinBlockedWarned) {
-            window.__roizinBlockedWarned = true;
-            alert("Roizin is open in another tab or the installed app. Please close the other one, then reload.");
-          }
-        } catch (e) {}
-      };
-      req.onsuccess = function (e) {
-        _db = e.target.result;
-        // If a newer version wants to upgrade from another tab later, step aside
-        // so it isn't blocked by this connection.
-        _db.onversionchange = function () { try { _db.close(); } catch (e) {} _db = null; };
-        resolve(_db);
-      };
+      req.onsuccess = function (e) { _db = e.target.result; resolve(_db); };
       req.onerror = function (e) { reject(e.target.error); };
     });
   }

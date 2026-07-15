@@ -26,18 +26,7 @@ a.lnk[data-go] { color: var(--red); text-decoration: underline; }
   --radius: 16px;
   --touch: 58px;           /* big touch target */
   --maxw: 760px;
-  /* Motion + depth tokens (polish). Layered, brand-tinted, low-opacity shadows
-     give a base -> elevated -> floating elevation system. */
-  --ease: cubic-bezier(.2, .8, .2, 1);
-  --shadow-sm: 0 1px 2px rgba(26,26,26,.05), 0 2px 6px rgba(150,25,28,.045);
-  --shadow-md: 0 2px 6px rgba(26,26,26,.06), 0 10px 26px rgba(150,25,28,.07);
-  --shadow-lg: 0 10px 26px rgba(26,26,26,.13), 0 24px 56px rgba(26,26,26,.17);
-  --focus-ring: 0 0 0 3px rgba(150,25,28,.32);
-  --space: 16px;
   font-size: 18px;
-}
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -49,7 +38,7 @@ body {
   -webkit-text-size-adjust: 100%;
   padding-bottom: env(safe-area-inset-bottom);
 }
-h1, h2, h3, .brandface { font-family: "Playfair Display", Georgia, serif; letter-spacing: -0.02em; }
+h1, h2, h3, .brandface { font-family: "Playfair Display", Georgia, serif; }
 
 a { color: var(--red); text-decoration: none; }
 b { font-weight: 700; }
@@ -155,15 +144,7 @@ select.big-input {
 }
 .day-divider:first-child { margin-top: 4px; }
 .day-date { font-weight: 800; font-size: 1.1rem; color: var(--black); }
-.day-stats { font-weight: 700; color: var(--red); font-size: 1rem; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
-.day-metal {
-  font-size: 0.9rem; font-weight: 600; padding: 2px 8px; border-radius: 999px;
-  background: #fff; border: 1px solid var(--line); color: var(--black); white-space: nowrap;
-}
-.day-metal b { font-weight: 800; }
-.day-metal.metal-gold { border-color: #d9a441; color: #8a5a00; }
-.day-metal.metal-silver { border-color: #9ca3af; color: #4b5563; }
-.day-metal.metal-platinum { border-color: #7c8aa0; color: #334155; }
+.day-stats { font-weight: 700; color: var(--red); font-size: 1rem; white-space: nowrap; }
 
 /* ---------- Open-lot card (Lots view) ---------- */
 .lot-open { border: 2px solid var(--red); }
@@ -324,7 +305,7 @@ select.big-input {
 
 /* ---------- Toasts ---------- */
 .toasts { position: fixed; left: 0; right: 0; bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 60; pointer-events: none; }
-.toast { max-width: 90%; padding: 14px 20px; border-radius: 12px; background: var(--black); color: #fff; font-weight: 600; font-size: 1.1rem; opacity: 0; transform: translateY(10px); transition: opacity .25s ease, transform .25s var(--ease); box-shadow: var(--shadow-lg); }
+.toast { max-width: 90%; padding: 14px 20px; border-radius: 12px; background: var(--black); color: #fff; font-weight: 600; font-size: 1.1rem; opacity: 0; transform: translateY(10px); transition: .25s; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.ok { background: var(--ok); }
 .toast.warn { background: var(--warn); }
@@ -332,7 +313,7 @@ select.big-input {
 /* ---------- Modal ---------- */
 .modal-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 70; padding: 0; }
 @media (min-width: 600px) { .modal-wrap { align-items: center; padding: 20px; } }
-.modal { background: #fff; width: 100%; max-width: 560px; border-radius: 20px 20px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.modal { background: #fff; width: 100%; max-width: 560px; border-radius: 20px 20px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; }
 @media (min-width: 600px) { .modal { border-radius: 20px; } }
 .modal h2 { margin: 0 0 16px; font-size: 1.6rem; }
 .modal-actions { display: flex; gap: 12px; margin-top: 18px; }
@@ -364,153 +345,6 @@ select.big-input {
 .rs-table th:nth-child(4), .rs-table td:nth-child(4) { text-align: right; }
 .rs-total { text-align: right; font-weight: 700; font-size: 1.5rem; margin: 18px 0 24px; }
 .rs-thanks { text-align: center; font-size: 0.85rem; color: #555; }
-
-/* ---------- Per-metal lots (Dashboard + Lots) ---------- */
-.section-label { margin: 4px 0 8px; font-weight: 700; }
-.metal-lots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
-@media (max-width: 720px) { .metal-lots { grid-template-columns: 1fr; } }
-.metal-lots .accum-card { text-align: left; }
-.metal-lots .accum-twin { grid-template-columns: 1fr 1fr; }
-.metal-lots .accum-twin .price-big { font-size: 1.7rem; }
-.metal-lots .accum-cta { display: inline-block; margin-top: 10px; }
-.accum-card.metal-gold { border-top: 4px solid #d9a441; }
-.accum-card.metal-silver { border-top: 4px solid #9ca3af; }
-.accum-card.metal-platinum { border-top: 4px solid #7c8aa0; }
-
-/* ---------- Metal tag pill ---------- */
-.metal-tag {
-  display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 1px 8px;
-  border-radius: 999px; border: 1px solid var(--line); color: var(--black); vertical-align: middle;
-}
-.metal-tag.metal-gold { background: #fbf1dc; border-color: #d9a441; color: #8a5a00; }
-.metal-tag.metal-silver { background: #f1f3f5; border-color: #9ca3af; color: #4b5563; }
-.metal-tag.metal-platinum { background: #eef1f5; border-color: #7c8aa0; color: #334155; }
-.metal-tag.metal-mixed { background: #f5f5f5; color: var(--muted); }
-.metal-seg { margin-bottom: 12px; }
-
-/* ---------- Edit button (paired with delete on list rows) ---------- */
-.edit-btn {
-  flex: 0 0 auto; align-self: stretch; min-width: 52px; border: none; border-left: 1.5px solid var(--line);
-  background: #fff; color: var(--black); font-size: 1.15rem; cursor: pointer;
-}
-.edit-btn:active { background: #f0f0f0; }
-
-/* ---------- Custom-lot selectable transaction rows ---------- */
-.csel-row { cursor: pointer; }
-.csel-row .cchk,
-.csel-row .cstk { width: 22px; height: 22px; margin-right: 8px; vertical-align: middle; accent-color: var(--red); }
-/* Per-day header with a whole-day "Select all / Clear" toggle. */
-.csel-datehead {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  margin: 14px 2px 2px; padding: 4px 2px; border-bottom: 1px solid var(--line);
-}
-.csel-datehead:first-child { margin-top: 2px; }
-.csel-all { padding: 6px 8px; white-space: nowrap; }
-
-/* =====================================================================
-   POLISH (CLAUDE.md guardrails): depth, motion, and interactive states.
-   Motion is transform/opacity only, spring-eased; hover is gated behind a
-   real pointer so touch devices don't get sticky states. Focus-visible gives
-   an accessible brand ring on every control.
-   ===================================================================== */
-.card { box-shadow: var(--shadow-sm); }
-
-/* Consistent, spring-eased micro-motion on every interactive surface. */
-.btn, .seg-btn, .tab, .nav-link, .btn-link,
-.edit-btn, .del-btn, .stock-btn, .edit-chip,
-.list-row, .accum-card, .stock-card, .result-row {
-  transition: transform .12s var(--ease), box-shadow .16s var(--ease),
-              background-color .16s var(--ease), border-color .16s var(--ease), color .16s var(--ease);
-}
-
-/* Pressed feedback. */
-.btn:active, .seg-btn:active, .tab:active, .nav-link:active,
-.edit-chip:active, .result-row:active { transform: translateY(1px) scale(.99); }
-.btn-primary:active, .btn-danger:active { background: var(--red-dark); }
-
-/* Accessible focus ring (keyboard / assistive), no sticky outline on tap. */
-.btn:focus-visible, .seg-btn:focus-visible, .tab:focus-visible, .nav-link:focus-visible,
-.btn-link:focus-visible, .big-input:focus-visible, select.big-input:focus-visible,
-.edit-btn:focus-visible, .del-btn:focus-visible, .stock-btn:focus-visible, .edit-chip:focus-visible,
-.list-row a:focus-visible, .result-row:focus-visible, [data-go]:focus-visible,
-.cchk:focus-visible, .cstk:focus-visible {
-  outline: none; box-shadow: var(--focus-ring);
-}
-.big-input:focus-visible, select.big-input:focus-visible { border-color: var(--red); box-shadow: var(--focus-ring); }
-
-/* Hover — pointer devices only. */
-@media (hover: hover) {
-  .btn-primary:hover, .btn-danger:hover { background: var(--red-dark); }
-  .btn-ghost:hover { background: #faf6f6; border-color: var(--red); color: var(--red); }
-  .seg-btn:hover:not(.active) { border-color: var(--red); }
-  .tab:hover:not(.active) { border-color: var(--black); }
-  .nav-link:hover:not(.active) { background: #ececec; }
-  .btn-link:hover { text-decoration: underline; }
-  .list-row:hover { box-shadow: var(--shadow-sm); border-color: #d8d8d8; }
-  .result-row:hover { background: #faf6f6; }
-  .accum-card:hover, .stock-card:hover { box-shadow: var(--shadow-md); }
-  .edit-btn:hover, .del-btn:hover, .stock-btn:hover { background: #f6f2f2; }
-  .del-btn:hover { color: var(--red-dark); }
-  .edit-chip:hover { border-color: var(--red); color: var(--red); }
-}
-
-/* ---------- Card action row (metal-lot / stock card headers) ---------- */
-.card-actions { display: flex; align-items: center; gap: 8px; }
-.edit-chip {
-  min-width: 34px; min-height: 34px; padding: 0 8px; line-height: 1;
-  border: 1.5px solid var(--line); border-radius: 9px; background: #fff;
-  color: var(--black); font-size: 1rem; cursor: pointer; font-family: inherit;
-}
-.adj-note { margin-top: 6px; color: var(--red); font-weight: 600; }
-
-/* ---------- Small button variant ---------- */
-.btn-sm { min-height: 42px; padding: 8px 16px; font-size: 1rem; }
-
-/* ---------- Live-stock cards (dashboard) ---------- */
-.stock-card { text-align: left; box-shadow: var(--shadow-sm); }
-.stock-card.metal-gold { border-top: 4px solid #d9a441; }
-.stock-card.metal-silver { border-top: 4px solid #9ca3af; }
-.stock-card.metal-platinum { border-top: 4px solid #7c8aa0; }
-.stock-actions { margin-top: 12px; gap: 10px; }
-.stock-actions .btn { flex: 1 1 auto; }
-
-/* ---------- Live-stock management view ---------- */
-.stock-metal { box-shadow: var(--shadow-sm); }
-.stock-metal.metal-gold { border-top: 4px solid #d9a441; }
-.stock-metal.metal-silver { border-top: 4px solid #9ca3af; }
-.stock-metal.metal-platinum { border-top: 4px solid #7c8aa0; }
-.stock-metal-h { margin: 0; }
-
-/* ---------- Move-to-stock button (Transaction History rows) ---------- */
-.stock-btn {
-  flex: 0 0 auto; align-self: stretch; min-width: 52px; border: none;
-  border-left: 1.5px solid var(--line); background: #fff; color: var(--black);
-  font-size: 1.15rem; cursor: pointer;
-}
-.stock-btn:active { transform: none; background: #f0f0f0; }
-
-/* ---------- New-transaction fix chips ---------- */
-.nt-fix { margin-top: 6px; }
-.nt-fixchip { display: inline-block; margin-right: 10px; }
-.fix-sep { color: var(--line); }
-
-/* ---------- Editable receipt (amount inputs) ---------- */
-.er-receipt { margin-top: 12px; }
-.er-amt {
-  width: 100%; min-height: 40px; padding: 6px 10px; font-size: 1.05rem; font-weight: 700;
-  border: 2px solid var(--red); border-radius: 8px; text-align: right; font-family: inherit;
-  background: #fff; color: var(--ink);
-}
-.er-amt:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-
-/* ---------- Lot "move items" button + move list ---------- */
-.lot-move { display: inline-block; margin-top: 8px; }
-.mi-list { max-height: 46vh; overflow-y: auto; }
-
-/* ---------- Balance ---------- */
-.bal-card { display: block; text-align: center; box-shadow: var(--shadow-sm); color: inherit; }
-.bal-card .price-big { margin: 6px 0; font-size: 2.4rem; }
-@media (hover: hover) { .bal-card:hover { box-shadow: var(--shadow-md); } }
 
 #print-area { display: none; }
 
