@@ -502,6 +502,13 @@ select.big-input {
   background: #fff; color: var(--ink);
 }
 .er-amt:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.er-total-input {
+  width: 180px; max-width: 60%; min-height: 44px; padding: 6px 12px;
+  font-size: 1.5rem; font-weight: 700; text-align: right; font-family: inherit;
+  border: 2px solid var(--red); border-radius: 8px; background: #fff; color: var(--ink);
+}
+.er-total-input:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.rs-total .er-total-input { vertical-align: middle; margin-left: 8px; }
 
 /* ---------- Lot "move items" button + move list ---------- */
 .lot-move { display: inline-block; margin-top: 8px; }
